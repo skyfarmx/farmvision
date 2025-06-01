@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    command: bash -c "source /myprojects/myprojectenv/bin/activate && python manage.py runserver 0.0.0.0:8000"
+    restart: always
+    image: djangoindocker
+    container_name: murad
+    volumes:
+      - static_volume:/myprojects/static/
+      - media_volume:/myprojects/media/
+    ports:
+      - "8000:8000"
+    networks:
+      - custom-net
+  nodeodm:
+    image: opendronemap/nodeodm
+    container_name: nodeodm
+    ports:
+      - "3000:3000"
+    networks:
+      - custom-net
+    restart: always
+
+
+
+networks:
+  custom-net:
+    driver: bridge
+    
+
+volumes:
+ static_volume:
+ media_volume:

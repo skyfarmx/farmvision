@@ -1,0 +1,5 @@
+Classify: smrf
+Scalar: 1.25
+Slope: 0.15
+Threshold: 0.5
+Window: 18.0
