@@ -37,7 +37,7 @@ FarmVision, tarım sektörüne yönelik geliştirilmiş kapsamlı bir yapay zeka
 - **Histogram analizi** - İstatistiksel görüntü analizi
 
 ### 🎨 Web Arayüzü Özellikleri
-- **CoreMeda Brand** - Özel marka kimliği
+- **Farm Vision Brand** - Özel marka kimliği
 - **Responsive Design** - Bootstrap tabanlı mobil uyumlu tasarım
 - **Dashboard** - Gerçek zamanlı istatistik kartları
 - **İnteraktif Menü** - Collapsible sidebar navigation
