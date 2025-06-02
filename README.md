@@ -86,7 +86,7 @@ Aşağıdaki YOLOv7 model dosyalarını proje ana dizinine yerleştirin:
 - `mandalina.pt`
 - `elma.pt`
 - `armut.pt`
-- `seftale.pt`
+- `seftali.pt`
 - `nar.pt`
 - `hurma.pt`
 
