@@ -150,7 +150,7 @@ gunicorn farm_vision.wsgi:application --bind 0.0.0.0:8000
 ### 🤝 Destek ve İletişim
 
 #### **Teknik Destek**
-- 📧 Email: support@farmvision.com
+- 📧 Email: support@skyfarmx.com
 - 📞 Telefon: +90 (553) 309-1312
 - 💬 Live Chat: Platform üzerinden 24/7
 
