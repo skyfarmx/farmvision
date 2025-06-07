@@ -26,10 +26,8 @@ SECRET_KEY = 'django-insecure-skit=zl3tcyh6*-zoxegu%@4*5k)-k5jnt(1fzfqyt4@jl%a%9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-
 ALLOWED_HOSTS = ["*"]
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"
-
 
 
 # Application definition
@@ -44,7 +42,7 @@ INSTALLED_APPS = [
     'detection.apps.DetectionConfig',
     'dron_map.apps.DronMapConfig',
     'user_registration.apps.UserRegistrationConfig',
-    'fontawesomefree',#pip install fontawesomefree==6.2.1
+    # Removed 'fontawesomefree' as it's not needed
 ]
 
 MIDDLEWARE = [
