@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from pathlib import Path
-from yolowebapp2 import histogram as hs
+from farmvision import histogram as hs
 import os,json,subprocess
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import redirect
 from .forms import  Projects_Form #UserForm, UsersForm,
 from .models import Users, Projects
 from django.shortcuts import get_object_or_404
-from yolowebapp2 import predict_tree,hashing,tasknode,options
+from farmvision import predict_tree,hashing,tasknode,options
 BASE_DIR = Path(__file__).resolve().parent.parent
 from asgiref.sync import sync_to_async
 import asyncio
@@ -184,7 +184,7 @@ def maping(request, id):
             if health_color == "detect":
                 image_path = os.path.split(f'{BASE_DIR}/static/{projes.picture}')[-1]
                 image_path2 = f'detected/{image_path}'               
-                detec = predict_tree.preddict(path_to_weights="agac.pt",path_to_source=f'{BASE_DIR}/static/{orthophoto["odm_orthophoto"]}') #subprocess.check_output(["python", path, "--weights", path_to_weights, "--conf", "0.1", "--img-size", "640","--view-img", "--no-trace", "--source", f'C:/Users/Murad/Documents/yolowebapp2/static/{projes.picture}', "--project", path_to_project, "--name", "detected"], timeout=600)
+                detec = predict_tree.preddict(path_to_weights="agac.pt",path_to_source=f'{BASE_DIR}/static/{orthophoto["odm_orthophoto"]}') #subprocess.check_output(["python", path, "--weights", path_to_weights, "--conf", "0.1", "--img-size", "640","--view-img", "--no-trace", "--source", f'C:/Users/Murad/Documents/farmvision/static/{projes.picture}', "--project", path_to_project, "--name", "detected"], timeout=600)
                 convert(f'{BASE_DIR}/static/{orthophoto["odm_orthophoto"]}',f'{BASE_DIR}/static/detected/odm_orthophoto.tif')               
                 return render(request, "map.html", {"userss": userss, "orthophoto": {'path': f"detected/odm_orthophoto.tif",'colormap':cmap,'ranges':post_range,},"algo":algo,"colors":colors, "static":static,"images_info":images_info,"detection": detec[-5:-1].decode("utf-8")})
 

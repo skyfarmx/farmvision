@@ -1,12 +1,13 @@
 import argparse
 import time
+import uuid
 from pathlib import Path
+import logging
 
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
-import rasterio as rio
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadImages
 from utils.general import check_img_size, check_requirements, check_imshow, non_max_suppression, apply_classifier, \
@@ -16,292 +17,297 @@ from utils.torch_utils import select_device, load_classifier, time_synchronized,
 from osgeo import gdal
 import numpy as np
 
-total_last = []
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def read_geotiff(filename):
-    ds = gdal.Open(filename)
-    band = ds.GetRasterBand(1)
-    arr = band.ReadAsArray()
-    return arr, ds
+    """Read GeoTIFF file with error handling."""
+    try:
+        ds = gdal.Open(filename)
+        if ds is None:
+            raise ValueError(f"Could not open GeoTIFF file: {filename}")
+        
+        band = ds.GetRasterBand(1)
+        if band is None:
+            raise ValueError(f"Could not read band from: {filename}")
+            
+        arr = band.ReadAsArray()
+        return arr, ds
+    except Exception as e:
+        logger.error(f"Error reading GeoTIFF {filename}: {str(e)}")
+        raise
+
 
 def write_geotiff(filename, arr, in_ds):
-    if arr.dtype == np.float32:
-        arr_type = gdal.GDT_Float32
-    else:
-        arr_type = gdal.GDT_Int32
+    """Write GeoTIFF file with proper resource management."""
+    try:
+        if arr.dtype == np.float32:
+            arr_type = gdal.GDT_Float32
+        else:
+            arr_type = gdal.GDT_Int32
 
-    driver = gdal.GetDriverByName("GTiff")
-    out_ds = driver.Create(filename, arr.shape[1], arr.shape[0], 1, arr_type)
-    out_ds.SetProjection(in_ds.GetProjection())
-    out_ds.SetGeoTransform(in_ds.GetGeoTransform())
-    band = out_ds.GetRasterBand(1)
-    band.WriteArray(arr)
-    band.FlushCache()
-    band.ComputeStatistics(False)
+        driver = gdal.GetDriverByName("GTiff")
+        out_ds = driver.Create(filename, arr.shape[1], arr.shape[0], 1, arr_type)
+        
+        if out_ds is None:
+            raise ValueError(f"Could not create output file: {filename}")
+            
+        out_ds.SetProjection(in_ds.GetProjection())
+        out_ds.SetGeoTransform(in_ds.GetGeoTransform())
+        
+        band = out_ds.GetRasterBand(1)
+        band.WriteArray(arr)
+        band.FlushCache()
+        band.ComputeStatistics(False)
+        
+        # Proper cleanup
+        band = None
+        out_ds = None
+        
+        logger.info(f"GeoTIFF saved: {filename}")
+        
+    except Exception as e:
+        logger.error(f"Error writing GeoTIFF {filename}: {str(e)}")
+        raise
 
-def count(founded_classes, im0, total_last):
-    model_values = []
-    aligns = im0.shape
-    align_bottom = aligns[0]
-    align_right = (aligns[1])
-    color_blue = (255, 0, 0)
-    color_red = (0, 0, 255)
-    thickness = 2
 
-    total_last.append(*founded_classes.values())
-    for i, (k, v) in enumerate(founded_classes.items()):
-        a = f"{k} = {v}"
-        b = f"{k}={sum(total_last)}"
-        model_values.append(v)
-        align_bottom = align_bottom-35
+def count(founded_classes, im0, total_count_list):
+    """Count objects and draw on image."""
+    try:
+        aligns = im0.shape
+        color_blue = (255, 0, 0)
+        color_red = (0, 0, 255)
+        thickness = 2
 
-        #cv2.putText(im0, str(a) ,(00, 185), cv2.FONT_HERSHEY_SIMPLEX, 1,color_red,thickness,cv2.LINE_AA)
-        cv2.putText(im0, str(b), (00, 170), cv2.FONT_HERSHEY_SIMPLEX,
+        # Add current frame count to total
+        current_frame_total = sum(founded_classes.values())
+        total_count_list.append(current_frame_total)
+        
+        # Display total count
+        total_objects = sum(total_count_list)
+        text = f"Total Objects: {total_objects}"
+        cv2.putText(im0, text, (10, 170), cv2.FONT_HERSHEY_SIMPLEX,
                     1, color_blue, thickness, cv2.LINE_AA)
-    print(int(*total_last))
-    # return total_last
-
-
-def total(founded_classes, im0, total_last):
-    ab = im0.shape
-    right = (ab[1]/1.7)
-    total_last.append(*founded_classes.values())
-    #print("Total counted objects by every frame:",sum(total_last))
-    #print("Total objects in the current frame:",total_last[-1])
-    # return sum(total_last)
+        
+        # Display current frame counts
+        y_offset = 200
+        for fruit_type, count in founded_classes.items():
+            text = f"{fruit_type}: {count}"
+            cv2.putText(im0, text, (10, y_offset), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.7, color_red, thickness, cv2.LINE_AA)
+            y_offset += 30
+            
+        logger.info(f"Frame objects: {current_frame_total}, Total: {total_objects}")
+        return total_objects
+        
+    except Exception as e:
+        logger.error(f"Error in count function: {str(e)}")
+        return 0
 
 
 def detect(save_img=False):
-    source, weights, view_img, save_txt, imgsz, trace = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, not opt.no_trace
-    save_img = not opt.nosave and not source.endswith(
-        '.txt')  # save inference images
+    """Main detection function."""
+    source, weights, view_img, save_txt, imgsz, trace = (
+        opt.source, opt.weights, opt.view_img, opt.save_txt, 
+        opt.img_size, not opt.no_trace
+    )
+    
+    # Initialize count list for this detection session
+    total_count_list = []
+    
+    save_img = not opt.nosave and not source.endswith('.txt')
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
 
     # Directories
-    save_dir = Path(Path(opt.project) / opt.name,
-                    exist_ok=opt.exist_ok)  # increment run
-    #print(save_dir, "save_dir")
-    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=False,
-                                                          exist_ok=True)  # make dir
+    save_dir = Path(Path(opt.project) / opt.name)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)
 
     # Initialize
     set_logging()
     device = select_device(opt.device)
-    half = False  # device.type != 'cpu'  # half precision only supported on CUDA
+    half = False  # device.type != 'cpu'
 
-    # Load model
-    model = attempt_load(weights, map_location=device)  # load FP32 model
-    stride = int(model.stride.max())  # model stride
-    imgsz = check_img_size(imgsz, s=stride)  # check img_size
+    try:
+        # Load model
+        model = attempt_load(weights, map_location=device)
+        stride = int(model.stride.max())
+        imgsz = check_img_size(imgsz, s=stride)
 
-    if trace:
-        model = TracedModel(model, device, opt.img_size)
+        if trace:
+            model = TracedModel(model, device, opt.img_size)
 
-    if half:
-        model.half()  # to FP16
+        if half:
+            model.half()
 
-    # Second-stage classifier
-    classify = False
-    if classify:
-        modelc = load_classifier(name='resnet101', n=2)  # initialize
-        modelc.load_state_dict(torch.load(
-            'weights/resnet101.pt', map_location=device)['model']).to(device).eval()
+        # Set Dataloader
+        vid_path, vid_writer = None, None
+        if webcam:
+            view_img = check_imshow()
+            cudnn.benchmark = True
+            dataset = LoadStreams(source, img_size=imgsz, stride=stride)
+        else:
+            dataset = LoadImages(source, img_size=imgsz, stride=stride)
 
-    # Set Dataloader
-    vid_path, vid_writer = None, None
-    if webcam:
-        view_img = check_imshow()
-        cudnn.benchmark = True  # set True to speed up constant image size inference
-        dataset = LoadStreams(source, img_size=imgsz, stride=stride)
-    else:
+        # Get names and colors
+        names = model.module.names if hasattr(model, 'module') else model.names
+        colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
+
+        # Run inference
+        if device.type != 'cpu':
+            model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(
+                next(model.parameters())))
+
+        t0 = time.time()
         
-        dataset = LoadImages(source, img_size=imgsz, stride=stride)
+        for path, img, im0s, vid_cap in dataset:
+            img = torch.from_numpy(img).to(device)
+            img = img.half() if half else img.float()
+            img /= 255.0
+            if img.ndimension() == 3:
+                img = img.unsqueeze(0)
 
-    # Get names and colors
-    names = model.module.names if hasattr(model, 'module') else model.names
-    colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
+            # Inference
+            t1 = time_synchronized()
+            pred = model(img, augment=opt.augment)[0]
+            t2 = time_synchronized()
 
-    # Run inference
-    if device.type != 'cpu':
-        model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(
-            next(model.parameters())))  # run once
-    old_img_w = old_img_h = imgsz
-    old_img_b = 1
+            # Apply NMS
+            pred = non_max_suppression(
+                pred, opt.conf_thres, opt.iou_thres, 
+                classes=opt.classes, agnostic=opt.agnostic_nms)
+            t3 = time_synchronized()
 
-    
+            # Process detections
+            for i, det in enumerate(pred):
+                if webcam:
+                    p, s, im0, frame = path[i], f'{i}: ', im0s[i].copy(), dataset.count
+                else:
+                    p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
 
+                p = Path(p)
+                save_path = str(save_dir / p.name)
+                txt_path = str(save_dir / 'labels' / p.stem) + \
+                    ('' if dataset.mode == 'image' else f'_{frame}')
+                
+                gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
+                
+                if len(det):
+                    # Rescale boxes
+                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
-    t0 = time.time()
-    for path, img, im0s, vid_cap in dataset:
+                    founded_classes = {}
+                    
+                    # Count objects by class
+                    for c in det[:, -1].unique():
+                        n = (det[:, -1] == c).sum()
+                        class_index = int(c)
+                        founded_classes[names[class_index]] = int(n)
+                        s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "
+
+                    # Apply counting and visualization
+                    total_objects = count(founded_classes=founded_classes, 
+                                        im0=im0, total_count_list=total_count_list)
+
+                    # Draw bounding boxes
+                    for *xyxy, conf, cls in reversed(det):
+                        if save_txt:
+                            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
+                            line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)
+                            with open(txt_path + '.txt', 'a') as f:
+                                f.write(('%g ' * len(line)).rstrip() % line + '\n')
+
+                        if save_img or view_img:
+                            label = f'{names[int(cls)]} {conf:.2f}'
+                            plot_one_box(xyxy, im0, label=label,
+                                       color=colors[int(cls)], line_thickness=2)
+
+                # Stream results
+                if view_img:
+                    cv2.imshow(str(p), im0)
+                    cv2.waitKey(1)
+
+                # Save results
+                if save_img:
+                    if dataset.mode == 'image':
+                        # Generate unique filename for GeoTIFF output
+                        unique_id = str(uuid.uuid4())[:8]
+                        geotiff_output = save_dir / f"result_{unique_id}.tif"
+                        
+                        try:
+                            if source.lower().endswith(('.tif', '.tiff')):
+                                nlcd16_arr, nlcd16_ds = read_geotiff(source)
+                                write_geotiff(str(geotiff_output), im0, nlcd16_ds)
+                        except Exception as e:
+                            logger.warning(f"Could not save GeoTIFF: {str(e)}")
+                        
+                        cv2.imwrite(save_path, im0)
+                        logger.info(f"Image saved: {save_path}")
+                        
+                    else:  # video
+                        if vid_path != save_path:
+                            vid_path = save_path
+                            if isinstance(vid_writer, cv2.VideoWriter):
+                                vid_writer.release()
+                            
+                            if vid_cap:
+                                fps = vid_cap.get(cv2.CAP_PROP_FPS)
+                                w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                                h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                            else:
+                                fps, w, h = 30, im0.shape[1], im0.shape[0]
+                                save_path += '.mp4'
+                            
+                            vid_writer = cv2.VideoWriter(
+                                save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                        vid_writer.write(im0)
+
+        # Cleanup
+        if isinstance(vid_writer, cv2.VideoWriter):
+            vid_writer.release()
+            
+        processing_time = time.time() - t0
+        logger.info(f'Detection completed in {processing_time:.3f}s')
         
-        img = torch.from_numpy(img).to(device)
-        img = img.half() if half else img.float()  # uint8 to fp16/32
-        img /= 255.0  # 0 - 255 to 0.0 - 1.0
-        if img.ndimension() == 3:
-            img = img.unsqueeze(0)
-
-        # Warmup
-        if device.type != 'cpu' and (old_img_b != img.shape[0] or old_img_h != img.shape[2] or old_img_w != img.shape[3]):
-            old_img_b = img.shape[0]
-            old_img_h = img.shape[2]
-            old_img_w = img.shape[3]
-            for i in range(3):
-                model(img, augment=opt.augment)[0]
-
-        # Inference
-        t1 = time_synchronized()
-        pred = model(img, augment=opt.augment)[0]
-        t2 = time_synchronized()
-
-        # Apply NMS
-        pred = non_max_suppression(
-            pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
-        t3 = time_synchronized()
-
-        # Apply Classifier
-        if classify:
-            pred = apply_classifier(pred, modelc, img, im0s)
-
-        # Process detections
-
-        for i, det in enumerate(pred):  # detections per image
-            if webcam:  # batch_size >= 1
-                p, s, im0, frame = path[i], '%g: ' % i, im0s[i].copy(
-                ), dataset.count
-            else:
-                p, s, im0, frame = path, '', im0s, getattr(dataset, 'frame', 0)
-
-            p = Path(p)  # to Path
-            save_path = str(save_dir / p.name)  # img.jpg
-            txt_path = str(save_dir / 'labels' / p.stem) + \
-                ('' if dataset.mode == 'image' else f'_{frame}')  # img.txt
-            # normalization gain whwh
-            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]
-            if len(det):
-                # Rescale boxes from img_size to im0 size
-                det[:, :4] = scale_coords(
-                    img.shape[2:], det[:, :4], im0.shape).round()
-
-                founded_classes = {}  # Creating a dict to storage our detected items
-                # Print results
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    class_index = int(c)
-                    count_of_object = int(n)
-
-                    founded_classes[names[class_index]] = int(n)
-                    # add to string
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "
-                    co = count(founded_classes=founded_classes, im0=im0,
-                               total_last=total_last)  # Applying counter function
-                    total(founded_classes, im0, total_last)
-                # Write results
-                for *xyxy, conf, cls in reversed(det):
-                    if save_txt:  # Write to file
-                        xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)
-                                          ) / gn).view(-1).tolist()  # normalized xywh
-                        # label format
-                        line = (
-                            cls, *xywh, conf) if opt.save_conf else (cls, *xywh)
-                        with open(txt_path + '.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
-
-                    if save_img or view_img:  # Add bbox to image
-                        label = f'{names[int(cls)]} {conf:.2f}'
-                        plot_one_box(xyxy, im0, label=label,
-                                     color=colors[int(cls)], line_thickness=1)
-
-            # Print time (inference + NMS)
-            #print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
-
-            # Stream results
-            if view_img:
-                cv2.imshow(str(p), im0)
-                cv2.waitKey(1)  # 1 millisecond
-
-            # Save results (image with detections)
-            if save_img:
-                if dataset.mode == 'image':
-                    print(type(im0),"ïmgggggggggggggggggggggggggggggggggggggg))))))))))))")
-                    nlcd16_arr, nlcd16_ds = read_geotiff(source)
-                    write_geotiff("output.tif", im0, nlcd16_ds)
-
-
-                    cv2.imwrite(save_path, im0)
-                    #print(f" The image with the result is saved in: {save_path}")
-                else:  # 'video' or 'stream'
-                    if vid_path != save_path:  # new video
-                        vid_path = save_path
-                        if isinstance(vid_writer, cv2.VideoWriter):
-                            vid_writer.release()  # release previous video writer
-                        if vid_cap:  # video
-                            fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                            w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                            h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        else:  # stream
-                            fps, w, h = 30, im0.shape[1], im0.shape[0]
-                            save_path += '.mp4'
-                        vid_writer = cv2.VideoWriter(
-                            save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-                    vid_writer.write(im0)
-
-    if save_txt or save_img:
-        s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
-        #print(f"Results saved to {save_dir}{s}")
-
-    #print(f'Done. ({time.time() - t0:.3f}s)')
-    # return str(co)
+        # Return total count for API integration
+        return sum(total_count_list) if total_count_list else 0
+        
+    except Exception as e:
+        logger.error(f"Error during detection: {str(e)}")
+        raise
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str,
-                        default='yolov7.pt', help='model.pt path(s)')
-    # file/folder, 0 for webcam
-    parser.add_argument('--source', type=str,
-                        default='inference/images', help='source')
-    parser.add_argument('--img-size', type=int, default=640,
-                        help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float,
-                        default=0.25, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float,
-                        default=0.45, help='IOU threshold for NMS')
-    parser.add_argument('--device', default='',
-                        help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
-    parser.add_argument('--view-img', action='store_true',
-                        help='display results')
-    parser.add_argument('--save-txt', action='store_true',
-                        help='save results to *.txt')
-    parser.add_argument('--save-conf', action='store_true',
-                        help='save confidences in --save-txt labels')
-    parser.add_argument('--nosave', action='store_true',
-                        help='do not save images/videos')
-    parser.add_argument('--classes', nargs='+', type=int,
-                        help='filter by class: --class 0, or --class 0 2 3')
-    parser.add_argument('--agnostic-nms', action='store_true',
-                        help='class-agnostic NMS')
-    parser.add_argument('--augment', action='store_true',
-                        help='augmented inference')
-    parser.add_argument('--update', action='store_true',
-                        help='update all models')
-    parser.add_argument('--project', default='runs/detect',
-                        help='save results to project/name')
-    parser.add_argument('--name', default='exp',
-                        help='save results to project/name')
-    parser.add_argument('--exist-ok', action='store_true',
-                        help='existing project/name ok, do not increment')
-    parser.add_argument('--no-trace', action='store_true',
-                        help='don`t trace model')
+    parser.add_argument('--weights', nargs='+', type=str, default='yolov7.pt', help='model.pt path(s)')
+    parser.add_argument('--source', type=str, default='inference/images', help='source')
+    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
+    parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
+    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+    parser.add_argument('--view-img', action='store_true', help='display results')
+    parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+    parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
+    parser.add_argument('--nosave', action='store_true', help='do not save images/videos')
+    parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
+    parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
+    parser.add_argument('--augment', action='store_true', help='augmented inference')
+    parser.add_argument('--update', action='store_true', help='update all models')
+    parser.add_argument('--project', default='runs/detect', help='save results to project/name')
+    parser.add_argument('--name', default='exp', help='save results to project/name')
+    parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
+    parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
+    
     opt = parser.parse_args()
-    # print(opt)
-    # return parser
-    #check_requirements(exclude=('pycocotools', 'thop'))
 
     with torch.no_grad():
-        if opt.update:  # update all models (to fix SourceChangeWarning)
+        if opt.update:
             for opt.weights in ['yolov7.pt']:
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect()
+            result = detect()
+            print(f"Total detected objects: {result}")

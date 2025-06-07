@@ -1,84 +1,659 @@
 {% extends 'header.html' %}
 {% block body %}
-      {% load static %}
-      {% include 'menu.html' %}
-      {% include 'navbar.html' with picture=userss.picture %}
-
+{% load static %}
+{% include 'menu.html' %}
+{% include 'navbar.html' with picture=userss.picture %}
 
 <div id="wrapper">
-      <div class="main-content">
-            
-                              <div class="row">
-                                    <div class="col-lg-3">
-                                          <a href="#" data-toggle="modal" data-target="#add-category" class="btn btn-lg btn-success btn-block waves-effect waves-light">
-                                                <i class="fa fa-plus"></i> Create New
-                                          </a>
-                                          <div id="external-events" class="margin-top-30">
-                                                <p>Drag and drop your event or click in the calendar</p>
-                                                <div class="fc-event bg-success">My Event One</div>
-                                                <!-- /.fc-event bg-success -->
-                                                <div class="fc-event bg-info">My Event Two</div>
-                                                <!-- /.fc-event bg-info -->
-                                                <div class="fc-event bg-orange">My Event Three</div>
-                                                <!-- /.fc-event bg-orange -->
-                                                <div class="fc-event bg-inverse">My Event Four</div>
-                                                <!-- /.fc-event bg-info -->
-                                                <div class="checkbox margin-top-30">
-                                                      <input id="drop-remove" type="checkbox">
-                                                      <label for="drop-remove">Remove after drop</label>
-                                                </div>
-                                          </div>
-                                          <!-- /#external-events.margin-top-20 -->
+    <div class="main-content">
+        <div class="row small-spacing">
+            <!-- Calendar Sidebar -->
+            <div class="col-lg-3">
+                <div class="card white">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fa fa-calendar-plus text-success mr-2"></i>
+                            Tarım Takvimi
+                        </h5>
+                    </div>
+                    <div class="card-content">
+                        <!-- Create New Event Button -->
+                        <button class="btn btn-success btn-lg btn-block waves-effect waves-light mb-4" 
+                                data-toggle="modal" 
+                                data-target="#add-farm-event">
+                            <i class="fa fa-plus mr-2"></i>
+                            Yeni Etkinlik
+                        </button>
+
+                        <!-- Farm Activity Categories -->
+                        <div class="farm-activities">
+                            <h6 class="text-muted mb-3">
+                                <i class="fa fa-tags mr-2"></i>
+                                Tarım Etkinlikleri
+                            </h6>
+                            
+                            <div class="activity-list">
+                                <div class="fc-event farm-event" data-category="ekim" style="background-color: #28a745;">
+                                    <i class="fa fa-seedling mr-2"></i>
+                                    Ekim/Dikim
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="sulama" style="background-color: #17a2b8;">
+                                    <i class="fa fa-tint mr-2"></i>
+                                    Sulama
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="hasat" style="background-color: #ffc107; color: #000;">
+                                    <i class="fa fa-apple-alt mr-2"></i>
+                                    Hasat
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="gubreleme" style="background-color: #8B4513;">
+                                    <i class="fa fa-leaf mr-2"></i>
+                                    Gübreleme
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="ilaclama" style="background-color: #dc3545;">
+                                    <i class="fa fa-spray-can mr-2"></i>
+                                    İlaçlama
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="budama" style="background-color: #6f42c1;">
+                                    <i class="fa fa-cut mr-2"></i>
+                                    Budama
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="analiz" style="background-color: #fd7e14;">
+                                    <i class="fa fa-drone mr-2"></i>
+                                    Drone Analizi
+                                </div>
+                                
+                                <div class="fc-event farm-event" data-category="bakim" style="background-color: #6c757d;">
+                                    <i class="fa fa-tools mr-2"></i>
+                                    Genel Bakım
+                                </div>
+                            </div>
+
+                            <!-- Calendar Options -->
+                            <div class="calendar-options mt-4">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="drop-remove">
+                                    <label class="custom-control-label" for="drop-remove">
+                                        Sürükledikten sonra kaldır
+                                    </label>
+                                </div>
+                                
+                                <div class="custom-control custom-checkbox mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="show-weekends" checked>
+                                    <label class="custom-control-label" for="show-weekends">
+                                        Hafta sonlarını göster
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Mini Calendar Stats -->
+                            <div class="calendar-stats mt-4">
+                                <h6 class="text-muted mb-3">
+                                    <i class="fa fa-chart-bar mr-2"></i>
+                                    Bu Ay İstatistikleri
+                                </h6>
+                                <div class="stats-list">
+                                    <div class="stat-item d-flex justify-content-between">
+                                        <span class="text-muted">Toplam Etkinlik:</span>
+                                        <span class="font-weight-bold" id="total-events">0</span>
                                     </div>
-                                    <!-- /.col-lg-3 -->
-                                    <div class="col-lg-9">
-                                          <div class="box-content">
-                                                <div id="calendar"></div>
-                                                <!-- /#calendar -->
-                                          </div>
-                                          <!-- /.box-content -->
+                                    <div class="stat-item d-flex justify-content-between">
+                                        <span class="text-muted">Tamamlanan:</span>
+                                        <span class="font-weight-bold text-success" id="completed-events">0</span>
                                     </div>
-                                    <!-- /.col-lg-9 -->
+                                    <div class="stat-item d-flex justify-content-between">
+                                        <span class="text-muted">Bekleyen:</span>
+                                        <span class="font-weight-bold text-warning" id="pending-events">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				
-
-				
+            <!-- Main Calendar -->
+            <div class="col-lg-9">
+                <div class="card white">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fa fa-calendar mr-2"></i>
+                            Farm Vision Takvimi
+                        </h5>
+                        <div class="calendar-controls">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="prev-month">
+                                    <i class="fa fa-chevron-left"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="today">
+                                    Bugün
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="next-month">
+                                    <i class="fa fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="btn-group ml-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-view="month">Ay</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-view="agendaWeek">Hafta</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-view="agendaDay">Gün</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div id="farm-calendar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-      </div>
-      <!-- /.main-content -->
-</div><!--/#wrapper -->
+<!-- Add Farm Event Modal -->
+<div class="modal fade" id="add-farm-event" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fa fa-plus-circle text-success mr-2"></i>
+                    Yeni Tarım Etkinliği Ekle
+                </h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="farm-event-form">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label for="event-title">
+                                    <i class="fa fa-tag mr-1"></i>
+                                    Etkinlik Başlığı
+                                </label>
+                                <input type="text" class="form-control" id="event-title" 
+                                       placeholder="Örn: Elma Bahçesi Sulama" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="event-category">
+                                    <i class="fa fa-list mr-1"></i>
+                                    Kategori
+                                </label>
+                                <select class="form-control" id="event-category">
+                                    <option value="ekim">🌱 Ekim/Dikim</option>
+                                    <option value="sulama">💧 Sulama</option>
+                                    <option value="hasat">🍎 Hasat</option>
+                                    <option value="gubreleme">🌿 Gübreleme</option>
+                                    <option value="ilaclama">🚿 İlaçlama</option>
+                                    <option value="budama">✂️ Budama</option>
+                                    <option value="analiz">🚁 Drone Analizi</option>
+                                    <option value="bakim">🔧 Genel Bakım</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="event-start">
+                                    <i class="fa fa-calendar mr-1"></i>
+                                    Başlangıç Tarihi
+                                </label>
+                                <input type="datetime-local" class="form-control" id="event-start" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="event-end">
+                                    <i class="fa fa-calendar-check mr-1"></i>
+                                    Bitiş Tarihi
+                                </label>
+                                <input type="datetime-local" class="form-control" id="event-end">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="event-location">
+                                    <i class="fa fa-map-marker-alt mr-1"></i>
+                                    Konum/Tarla
+                                </label>
+                                <input type="text" class="form-control" id="event-location" 
+                                       placeholder="Örn: Kuzey Bahçesi, A Bloğu">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="event-priority">
+                                    <i class="fa fa-exclamation-triangle mr-1"></i>
+                                    Öncelik
+                                </label>
+                                <select class="form-control" id="event-priority">
+                                    <option value="low">🟢 Düşük</option>
+                                    <option value="medium" selected>🟡 Orta</option>
+                                    <option value="high">🔴 Yüksek</option>
+                                    <option value="urgent">⚠️ Acil</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="event-description">
+                            <i class="fa fa-file-alt mr-1"></i>
+                            Açıklama
+                        </label>
+                        <textarea class="form-control" id="event-description" rows="3" 
+                                  placeholder="Etkinlik detayları, kullanılacak malzemeler, dikkat edilecek noktalar..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="event-reminder">
+                            <label class="custom-control-label" for="event-reminder">
+                                📱 1 gün önceden hatırlatma gönder
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fa fa-times mr-1"></i>
+                    İptal
+                </button>
+                <button type="button" class="btn btn-success" id="save-event">
+                    <i class="fa fa-save mr-1"></i>
+                    Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal fade" id="event-detail" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detail-title">Etkinlik Detayları</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detail-body">
+                <!-- Event details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" id="edit-event">
+                    <i class="fa fa-edit mr-1"></i>
+                    Düzenle
+                </button>
+                <button type="button" class="btn btn-danger" id="delete-event">
+                    <i class="fa fa-trash mr-1"></i>
+                    Sil
+                </button>
+                <button type="button" class="btn btn-success" id="complete-event">
+                    <i class="fa fa-check mr-1"></i>
+                    Tamamlandı
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Farm Calendar Specific Styles */
+.farm-event {
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    cursor: move;
+    font-size: 13px;
+    border: none;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.farm-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.calendar-stats .stat-item {
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.calendar-stats .stat-item:last-child {
+    border-bottom: none;
+}
+
+.calendar-controls .btn-group {
+    margin: 0 5px;
+}
+
+.fc-event {
+    border-radius: 6px !important;
+    border: none !important;
+    padding: 2px 6px !important;
+    font-size: 12px !important;
+}
+
+.fc-day-grid-event {
+    border-radius: 4px !important;
+}
+
+.fc-time-grid-event {
+    border-radius: 4px !important;
+}
+
+/* Priority indicators */
+.priority-high {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.priority-urgent {
+    border-left: 4px solid #ff0000 !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Modal improvements */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 20px 30px;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .calendar-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .calendar-controls .btn-group {
+        margin: 0;
+    }
+}
+</style>
+
+<!-- Include FullCalendar CSS and JS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/core/main.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/daygrid/main.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/timegrid/main.min.css" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/core/main.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/interaction/main.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/daygrid/main.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/4.2.0/timegrid/main.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Farm Calendar Configuration
+    var calendarEl = document.getElementById('farm-calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        plugins: ['interaction', 'dayGrid', 'timeGrid'],
+        defaultView: 'dayGridMonth',
+        locale: 'tr',
+        header: false, // We'll use custom header
+        editable: true,
+        droppable: true,
+        selectable: true,
+        selectMirror: true,
+        dayMaxEvents: true,
+        weekends: true,
+        
+        // Farm-specific event colors by category
+        eventColor: '#28a745', // Default green
+        
+        // Sample farm events
+        events: [
+            {
+                title: 'Elma Bahçesi Sulama',
+                start: '2024-01-15T08:00:00',
+                end: '2024-01-15T10:00:00',
+                backgroundColor: '#17a2b8',
+                category: 'sulama',
+                location: 'Kuzey Bahçesi',
+                priority: 'medium'
+            },
+            {
+                title: 'Drone Analizi',
+                start: '2024-01-20T14:00:00',
+                end: '2024-01-20T16:00:00',
+                backgroundColor: '#fd7e14',
+                category: 'analiz',
+                location: 'Tüm Alanlar',
+                priority: 'high'
+            },
+            {
+                title: 'Mandalina Hasadı',
+                start: '2024-01-25',
+                end: '2024-01-27',
+                backgroundColor: '#ffc107',
+                category: 'hasat',
+                location: 'Güney Bahçesi',
+                priority: 'urgent'
+            }
+        ],
+        
+        // Event creation
+        select: function(info) {
+            $('#event-start').val(info.startStr);
+            $('#event-end').val(info.endStr);
+            $('#add-farm-event').modal('show');
+        },
+        
+        // Event click
+        eventClick: function(info) {
+            showEventDetail(info.event);
+        },
+        
+        // Event drop
+        eventDrop: function(info) {
+            updateEventStats();
+        },
+        
+        // External event drop
+        drop: function(info) {
+            // Handle external event drop
+            if (document.getElementById('drop-remove').checked) {
+                info.draggedEl.parentNode.removeChild(info.draggedEl);
+            }
+            updateEventStats();
+        }
+    });
+    
+    calendar.render();
+    
+    // Custom navigation
+    document.getElementById('prev-month').addEventListener('click', function() {
+        calendar.prev();
+    });
+    
+    document.getElementById('next-month').addEventListener('click', function() {
+        calendar.next();
+    });
+    
+    document.getElementById('today').addEventListener('click', function() {
+        calendar.today();
+    });
+    
+    // View buttons
+    document.querySelectorAll('[data-view]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            calendar.changeView(this.dataset.view);
+            document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    // Weekend toggle
+    document.getElementById('show-weekends').addEventListener('change', function() {
+        calendar.setOption('weekends', this.checked);
+    });
+    
+    // Save event
+    document.getElementById('save-event').addEventListener('click', function() {
+        saveNewEvent();
+    });
+    
+    // External events
+    var Draggable = FullCalendar.Draggable;
+    new Draggable(document.getElementById('external-events'), {
+        itemSelector: '.fc-event',
+        eventData: function(eventEl) {
+            return {
+                title: eventEl.innerText,
+                backgroundColor: getComputedStyle(eventEl).backgroundColor,
+                category: eventEl.dataset.category
+            };
+        }
+    });
+    
+    // Functions
+    function saveNewEvent() {
+        var title = document.getElementById('event-title').value;
+        var category = document.getElementById('event-category').value;
+        var start = document.getElementById('event-start').value;
+        var end = document.getElementById('event-end').value;
+        var location = document.getElementById('event-location').value;
+        var priority = document.getElementById('event-priority').value;
+        var description = document.getElementById('event-description').value;
+        
+        if (title) {
+            var eventData = {
+                title: title,
+                start: start,
+                end: end,
+                backgroundColor: getCategoryColor(category),
+                extendedProps: {
+                    category: category,
+                    location: location,
+                    priority: priority,
+                    description: description
+                }
+            };
+            
+            calendar.addEvent(eventData);
+            $('#add-farm-event').modal('hide');
+            document.getElementById('farm-event-form').reset();
+            updateEventStats();
+        }
+    }
+    
+    function getCategoryColor(category) {
+        var colors = {
+            'ekim': '#28a745',
+            'sulama': '#17a2b8',
+            'hasat': '#ffc107',
+            'gubreleme': '#8B4513',
+            'ilaclama': '#dc3545',
+            'budama': '#6f42c1',
+            'analiz': '#fd7e14',
+            'bakim': '#6c757d'
+        };
+        return colors[category] || '#28a745';
+    }
+    
+    function showEventDetail(event) {
+        var html = `
+            <div class="event-detail-content">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>📅 Başlangıç:</strong><br>
+                        ${event.start ? event.start.toLocaleString() : 'Belirtilmemiş'}
+                    </div>
+                    <div class="col-6">
+                        <strong>🏁 Bitiş:</strong><br>
+                        ${event.end ? event.end.toLocaleString() : 'Belirtilmemiş'}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <strong>📍 Konum:</strong><br>
+                        ${event.extendedProps.location || 'Belirtilmemiş'}
+                    </div>
+                    <div class="col-6">
+                        <strong>⚡ Öncelik:</strong><br>
+                        ${getPriorityText(event.extendedProps.priority)}
+                    </div>
+                </div>
+                <hr>
+                <div>
+                    <strong>📝 Açıklama:</strong><br>
+                    ${event.extendedProps.description || 'Açıklama bulunmuyor'}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('detail-title').innerHTML = 
+            `<i class="fa fa-calendar mr-2"></i>${event.title}`;
+        document.getElementById('detail-body').innerHTML = html;
+        $('#event-detail').modal('show');
+    }
+    
+    function getPriorityText(priority) {
+        var priorities = {
+            'low': '🟢 Düşük',
+            'medium': '🟡 Orta',
+            'high': '🔴 Yüksek',
+            'urgent': '⚠️ Acil'
+        };
+        return priorities[priority] || '🟡 Orta';
+    }
+    
+    function updateEventStats() {
+        var events = calendar.getEvents();
+        var total = events.length;
+        var completed = events.filter(e => e.extendedProps.completed).length;
+        var pending = total - completed;
+        
+        document.getElementById('total-events').textContent = total;
+        document.getElementById('completed-events').textContent = completed;
+        document.getElementById('pending-events').textContent = pending;
+    }
+    
+    // Initialize stats
+    updateEventStats();
+    
+    // Set current date for new events
+    var now = new Date();
+    var currentDateTime = now.toISOString().slice(0, 16);
+    document.getElementById('event-start').value = currentDateTime;
+});
+</script>
+
 {% endblock %}

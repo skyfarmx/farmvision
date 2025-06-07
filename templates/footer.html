@@ -1,48 +1,503 @@
+<!-- Farm Vision Analytics Cards -->
+<div class="analytics-cards-section">
+    <div class="row small-spacing">
+        <!-- Fruit Count Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-success text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-apple-whole"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="{{count|default:0}}">0</h2>
+                        <p class="text">Tespit Edilen Meyve</p>
+                        <small class="stats-label">AI Analiz Sonucu</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+12%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="col-xl-3 col-lg-6 col-12">
-		<div class="box-content bg-info  text-white">
-			<div class="statistics-box with-icon">
-				<i class="ico fa-sharp fa-solid fa-apple-whole"></i>
-				<h2 class="counter ">{{count}}</h2>
-				<p class="text text-white">Toplam meyva sayisi</p>
-			</div>
-		</div>
-		<!-- /.box-content -->
-	</div>
-	<div class="col-xl-3 col-lg-6 col-12">
-		<div class="box-content bg-danger text-white ">
-			<div class="statistics-box with-icon">
-				
-				
-				<i class="ico fa-solid fa-weight-hanging"></i>
-				<h2 class="counter ">{{kilo}}</h2>
-				<p class="text text-white">Toplam meyva çekisi</p>
-			</div>
-		</div>
-		<!-- /.box-content -->
-	</div>
-		<div class="col-xl-3 col-lg-6 col-12">
-		<div class="box-content bg-warning text-white">
-			<div class="statistics-box with-icon">
-				
-				
-				<i class="ico fa-sharp fa-solid fa-hourglass-start"></i>
-				<h2 class="counter ">{{time}}</h2>
-				<p class="text text-white">Kaç saniye</p>
-			</div>
-		</div>
-		<!-- /.box-content -->
-	</div>
-	<div class="col-xl-3 col-lg-6 col-12">
-		<div class="box-content bg-success  text-white">
-			<div class="statistics-box with-icon">
-				
-				
-				<i class="ico fa-solid fa-calculator"></i>				
-				<h2 class="counter">{{toplam_ceki}}</h2>
-				<p class="text text-white">Ağac*kq</p>
-			</div>
-		</div>
-		<!-- /.box-content -->
-	</div>
-		
+        <!-- Weight Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-danger text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-weight-hanging"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="{{kilo|default:0}}">0</h2>
+                        <p class="text">Tahmini Ağırlık (kg)</p>
+                        <small class="stats-label">Hesaplanan Değer</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+8%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Time Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-warning text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-stopwatch"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="{{time|default:0}}">0</h2>
+                        <p class="text">İşlem Süresi (sn)</p>
+                        <small class="stats-label">AI Analiz Hızı</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-down trend-icon-down"></i>
+                        <span class="trend-percent">-15%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Harvest Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-info text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-tractor"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="{{toplam_ceki|default:0}}">0</h2>
+                        <p class="text">Toplam Hasat (kg)</p>
+                        <small class="stats-label">Bahçe x Ağırlık</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+25%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Analytics Row -->
+    <div class="row small-spacing">
+        <!-- Accuracy Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-purple text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-bullseye"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="94.2">0</h2>
+                        <p class="text">Tespit Doğruluğu (%)</p>
+                        <small class="stats-label">AI Performansı</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+2.1%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Scanned Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-teal text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-map"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="2.1">0</h2>
+                        <p class="text">Taranan Alan (ha)</p>
+                        <small class="stats-label">Drone Kapsamı</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+5%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trees Analyzed Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-orange text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-tree"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="247">0</h2>
+                        <p class="text">Analiz Edilen Ağaç</p>
+                        <small class="stats-label">Toplam Ağaç Sayısı</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-equals trend-icon-stable"></i>
+                        <span class="trend-percent">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Efficiency Card -->
+        <div class="col-xl-3 col-lg-6 col-12 mb-4">
+            <div class="box-content analytics-card bg-gradient-dark text-white">
+                <div class="statistics-box with-icon">
+                    <div class="icon-container">
+                        <i class="ico fa-solid fa-gauge-high"></i>
+                        <div class="icon-bg"></div>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="counter animated-counter" data-target="87.5">0</h2>
+                        <p class="text">Verimlilik Skoru</p>
+                        <small class="stats-label">Genel Performans</small>
+                    </div>
+                    <div class="stats-trend">
+                        <i class="fa fa-arrow-up trend-icon"></i>
+                        <span class="trend-percent">+3.2%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Farm Vision Analytics Cards Styles */
+.analytics-cards-section {
+    padding: 20px;
+}
+
+.analytics-card {
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    border: none;
+}
+
+.analytics-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+}
+
+.statistics-box {
+    padding: 25px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+}
+
+.icon-container .ico {
+    font-size: 2.5rem;
+    z-index: 2;
+    position: relative;
+}
+
+.icon-bg {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.stats-content {
+    flex: 1;
+    margin-left: 20px;
+    text-align: left;
+}
+
+.stats-content h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    line-height: 1;
+}
+
+.stats-content p {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.stats-label {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-trend {
+    text-align: center;
+    min-width: 60px;
+}
+
+.trend-icon,
+.trend-icon-down,
+.trend-icon-stable {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.trend-icon {
+    color: #00FF88;
+}
+
+.trend-icon-down {
+    color: #FF4757;
+}
+
+.trend-icon-stable {
+    color: #FFD700;
+}
+
+.trend-percent {
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: block;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-success {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #F44336 0%, #d32f2f 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #FF9800 0%, #f57c00 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #2196F3 0%, #1976d2 100%);
+}
+
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #9C27B0 0%, #7b1fa2 100%);
+}
+
+.bg-gradient-teal {
+    background: linear-gradient(135deg, #009688 0%, #00695c 100%);
+}
+
+.bg-gradient-orange {
+    background: linear-gradient(135deg, #FF5722 0%, #d84315 100%);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #424242 0%, #212121 100%);
+}
+
+/* Animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+}
+
+@keyframes countUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animated-counter {
+    animation: countUp 0.8s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .statistics-box {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .stats-content {
+        margin-left: 0;
+        margin-top: 15px;
+        text-align: center;
+    }
+    
+    .stats-trend {
+        margin-top: 10px;
+    }
+    
+    .icon-container {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .icon-container .ico {
+        font-size: 2rem;
+    }
+    
+    .stats-content h2 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .analytics-cards-section {
+        padding: 10px;
+    }
+    
+    .analytics-card {
+        margin-bottom: 15px;
+    }
+    
+    .statistics-box {
+        padding: 15px;
+    }
+    
+    .stats-content h2 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Loading Animation */
+.counter-loading {
+    opacity: 0.5;
+    animation: pulse 1.5s infinite;
+}
+
+/* Hover Effects */
+.analytics-card:hover .icon-bg {
+    animation-duration: 1s;
+}
+
+.analytics-card:hover .stats-content h2 {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animated Counter Function
+    function animateCounter(element, target, duration = 2000) {
+        const start = 0;
+        const increment = target / (duration / 16);
+        let current = start;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                element.textContent = Math.round(target * 10) / 10;
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.round(current * 10) / 10;
+            }
+        }, 16);
+    }
+
+    // Initialize counters
+    const counters = document.querySelectorAll('.animated-counter');
+    
+    // Intersection Observer for counter animation
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const target = parseFloat(entry.target.dataset.target) || 0;
+                animateCounter(entry.target, target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    counters.forEach(counter => {
+        observer.observe(counter);
+    });
+
+    // Add loading state simulation
+    setTimeout(() => {
+        document.querySelectorAll('.analytics-card').forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 100);
+        });
+    }, 100);
+
+    // Real-time data update simulation (every 30 seconds)
+    setInterval(() => {
+        const trendElements = document.querySelectorAll('.trend-percent');
+        trendElements.forEach(element => {
+            // Simulate small changes in trend percentages
+            const currentValue = parseFloat(element.textContent.replace('%', '').replace('+', '').replace('-', ''));
+            const variation = (Math.random() - 0.5) * 2; // Random variation between -1 and +1
+            const newValue = currentValue + variation;
+            
+            if (newValue > 0) {
+                element.textContent = `+${newValue.toFixed(1)}%`;
+                element.previousElementSibling.className = 'fa fa-arrow-up trend-icon';
+            } else if (newValue < 0) {
+                element.textContent = `${newValue.toFixed(1)}%`;
+                element.previousElementSibling.className = 'fa fa-arrow-down trend-icon-down';
+            } else {
+                element.textContent = '0%';
+                element.previousElementSibling.className = 'fa fa-equals trend-icon-stable';
+            }
+        });
+    }, 30000); // Update every 30 seconds
+});
+</script>

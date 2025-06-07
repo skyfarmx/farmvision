@@ -1,65 +1,562 @@
+<!-- Farm Vision Analytics Dashboard -->
+<div class="analytics-dashboard">
+    <!-- Fruit Production Analytics -->
+    <div class="col-xl-6 col-lg-12 mb-4">
+        <div class="box-content card white">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="box-title mb-0">
+                    <i class="fa fa-chart-line text-success mr-2"></i>
+                    Meyve Üretim Analizi
+                </h4>
+                <div class="chart-controls">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-period="year">Yıllık</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="month">Aylık</button>
+                        <button type="button" class="btn btn-outline-primary" data-period="week">Haftalık</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-content">
+                <canvas id="fruit-production-chart" class="chartjs-chart" width="480" height="320"></canvas>
+                
+                <!-- Chart Legend -->
+                <div class="chart-legend mt-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #FF6384;"></span>
+                                <strong>Mandalina</strong><br>
+                                <span class="text-muted">2,450 kg</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #36A2EB;"></span>
+                                <strong>Elma</strong><br>
+                                <span class="text-muted">1,890 kg</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background-color: #FFCE56;"></span>
+                                <strong>Armut</strong><br>
+                                <span class="text-muted">1,230 kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-			<div class="col-xl-6 col-lg-12">
-				<div class="box-content">
-					<h4 class="box-title">Line Chart</h4>
-					<!-- /.box-title -->
-					<div class="dropdown js__drop_down">
-						<a href="#" class="dropdown-icon glyphicon glyphicon-option-vertical js__drop_down_button"></a>
-						<ul class="sub-menu">
-							<li><a href="#">Action</a></li>
-							<li><a href="#">Another action</a></li>
-							<li><a href="#">Something else there</a></li>
-							<li class="split"></li>
-							<li><a href="#">Separated link</a></li>
-						</ul>
-						<!-- /.sub-menu -->
-					</div>
-					<!-- /.dropdown js__dropdown -->
-					<canvas id="line-chartjs-chart" class="chartjs-chart" width="480" height="320"></canvas>
-					<!-- /#line-chartjs-chart.chartjs-chart -->
-				</div>
-				<!-- /.box-content -->
-			</div>
-			<!-- /.col-xl-6 col-lg-12 -->
-		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  const ctx = document.getElementById('line-chartjs-chart');
+    <!-- Seasonal Harvest Comparison -->
+    <div class="col-xl-6 col-lg-12 mb-4">
+        <div class="box-content card white">
+            <div class="card-header">
+                <h4 class="box-title">
+                    <i class="fa fa-calendar-alt text-warning mr-2"></i>
+                    Mevsimsel Hasat Karşılaştırması
+                </h4>
+            </div>
+            <div class="card-content">
+                <canvas id="seasonal-harvest-chart" class="chartjs-chart" width="480" height="320"></canvas>
+            </div>
+        </div>
+    </div>
 
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: [1990,	1991,	1992,	1993,	1994,	1995,	1996,	1997,	1998,	1999,	2000,	2001,	2002,	2003,	2004,	2005,	2006,	2007,	2008,	2009,	2010,	2011,	2012,	2013,	2014,	2015,	2016,	2017,	2018,	2019,	2020],
-      datasets: [{
-        label: 'Turkiye ağac statitik',
-        backgroundColor: [
-      'rgba(255, 99, 132, 0.2)',
-      'rgba(255, 159, 64, 0.2)',
-      'rgba(255, 205, 86, 0.2)',
-      'rgba(75, 192, 192, 0.2)',
-      'rgba(54, 162, 235, 0.2)',
-      'rgba(153, 102, 255, 0.2)',
-      'rgba(201, 203, 207, 0.2)'
-    ],
-    borderColor: [
-      'rgb(255, 99, 132)',
-      'rgb(255, 159, 64)',
-      'rgb(255, 205, 86)',
-      'rgb(75, 192, 192)',
-      'rgb(54, 162, 235)',
-      'rgb(153, 102, 255)',
-      'rgb(201, 203, 207)'
-    ],
-    borderWidth: 1,
-        data: [25.70518301,	25.75259151,	25.8,	25.84740849,	25.89481699,	25.94222548,	25.98963398,	26.03704247,	26.08445097,	26.13185946,	26.17926796,	26.30071983,	26.42217169,	26.54362356,	26.66507543,	26.78652729,	26.90797916,	27.02943103,	27.15088289,	27.27233476,	27.39378662,	27.53599002,	27.67819342,	27.82039681,	27.96260021,	28.10480361,	28.10480361,	28.26352923,	28.4660941,	28.6687889,	28.8714837],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
+    <!-- Drone Analysis Results -->
+    <div class="col-xl-8 col-lg-12 mb-4">
+        <div class="box-content card white">
+            <div class="card-header">
+                <h4 class="box-title">
+                    <i class="fa fa-drone text-info mr-2"></i>
+                    Drone Analiz Sonuçları - Meyve Sayısı Tespiti
+                </h4>
+                <p class="text-muted mb-0">AI destekli meyve sayımı ve tahmin doğruluğu</p>
+            </div>
+            <div class="card-content">
+                <canvas id="drone-analysis-chart" class="chartjs-chart" width="600" height="300"></canvas>
+                
+                <!-- Analysis Summary -->
+                <div class="analysis-summary mt-4">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="summary-item">
+                                <h3 class="text-success">94.2%</h3>
+                                <p class="text-muted">Tespit Doğruluğu</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="summary-item">
+                                <h3 class="text-info">15,847</h3>
+                                <p class="text-muted">Toplam Meyve</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="summary-item">
+                                <h3 class="text-warning">2.1 ha</h3>
+                                <p class="text-muted">Taranan Alan</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="summary-item">
+                                <h3 class="text-primary">1,982 kg</h3>
+                                <p class="text-muted">Tahmini Ağırlık</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Farm Health Index -->
+    <div class="col-xl-4 col-lg-12 mb-4">
+        <div class="box-content card white">
+            <div class="card-header">
+                <h4 class="box-title">
+                    <i class="fa fa-heartbeat text-danger mr-2"></i>
+                    Çiftlik Sağlık İndeksi
+                </h4>
+            </div>
+            <div class="card-content text-center">
+                <canvas id="health-index-chart" class="chartjs-chart" width="300" height="300"></canvas>
+                
+                <!-- Health Indicators -->
+                <div class="health-indicators mt-3">
+                    <div class="indicator-item mb-2">
+                        <span class="indicator-label">Bitki Sağlığı:</span>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: 87%"></div>
+                        </div>
+                        <span class="indicator-value">87%</span>
+                    </div>
+                    <div class="indicator-item mb-2">
+                        <span class="indicator-label">Su Durumu:</span>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" style="width: 74%"></div>
+                        </div>
+                        <span class="indicator-value">74%</span>
+                    </div>
+                    <div class="indicator-item mb-2">
+                        <span class="indicator-label">Beslenme:</span>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" style="width: 92%"></div>
+                        </div>
+                        <span class="indicator-value">92%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Growth Trend Analysis -->
+    <div class="col-xl-12 col-lg-12 mb-4">
+        <div class="box-content card white">
+            <div class="card-header">
+                <h4 class="box-title">
+                    <i class="fa fa-seedling text-success mr-2"></i>
+                    Büyüme Trendi Analizi - Son 12 Ay
+                </h4>
+                <div class="chart-filters">
+                    <select class="form-control form-control-sm" id="growth-filter" style="width: 200px;">
+                        <option value="all">Tüm Meyveler</option>
+                        <option value="mandalina">Mandalina</option>
+                        <option value="elma">Elma</option>
+                        <option value="armut">Armut</option>
+                        <option value="seftali">Şeftali</option>
+                        <option value="nar">Nar</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-content">
+                <canvas id="growth-trend-chart" class="chartjs-chart" width="800" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.analytics-dashboard {
+    padding: 20px;
+}
+
+.chart-legend {
+    padding: 15px 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+.legend-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin: 5px 0;
+}
+
+.legend-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.summary-item {
+    padding: 15px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin: 5px 0;
+}
+
+.summary-item h3 {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.health-indicators {
+    text-align: left;
+}
+
+.indicator-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.indicator-label {
+    min-width: 100px;
+    font-size: 12px;
+    color: #666;
+}
+
+.progress {
+    flex: 1;
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
+.indicator-value {
+    min-width: 40px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.chart-filters {
+    display: flex;
+    align-items: center;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 20px;
+}
+
+.card-content {
+    padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chart-controls {
+        flex-direction: column;
+        gap: 5px;
     }
-  });
+    
+    .summary-item h3 {
+        font-size: 1.5rem;
+    }
+    
+    .legend-item {
+        margin: 2px 0;
+        padding: 8px;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Farm Vision Color Scheme
+    const farmColors = {
+        mandalina: '#FF6384',
+        elma: '#36A2EB', 
+        armut: '#FFCE56',
+        seftali: '#FF9F40',
+        nar: '#9966FF',
+        hurma: '#4BC0C0',
+        success: '#4CAF50',
+        warning: '#FF9800',
+        info: '#2196F3',
+        danger: '#F44336'
+    };
+
+    // 1. Fruit Production Chart
+    const fruitCtx = document.getElementById('fruit-production-chart');
+    new Chart(fruitCtx, {
+        type: 'line',
+        data: {
+            labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+            datasets: [{
+                label: 'Mandalina (kg)',
+                data: [120, 190, 300, 500, 200, 300, 450, 400, 600, 800, 950, 1200],
+                borderColor: farmColors.mandalina,
+                backgroundColor: farmColors.mandalina + '20',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Elma (kg)',
+                data: [80, 150, 200, 350, 150, 250, 380, 320, 500, 650, 750, 890],
+                borderColor: farmColors.elma,
+                backgroundColor: farmColors.elma + '20',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Armut (kg)',
+                data: [60, 120, 180, 280, 120, 200, 300, 250, 400, 520, 600, 720],
+                borderColor: farmColors.armut,
+                backgroundColor: farmColors.armut + '20',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: '2024 Meyve Üretim Trendi'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' kg';
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+
+    // 2. Seasonal Harvest Comparison
+    const seasonalCtx = document.getElementById('seasonal-harvest-chart');
+    new Chart(seasonalCtx, {
+        type: 'radar',
+        data: {
+            labels: ['İlkbahar', 'Yaz', 'Sonbahar', 'Kış'],
+            datasets: [{
+                label: '2024',
+                data: [85, 92, 78, 65],
+                borderColor: farmColors.success,
+                backgroundColor: farmColors.success + '30',
+                pointBackgroundColor: farmColors.success,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: farmColors.success
+            }, {
+                label: '2023',
+                data: [78, 87, 72, 58],
+                borderColor: farmColors.info,
+                backgroundColor: farmColors.info + '30',
+                pointBackgroundColor: farmColors.info,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: farmColors.info
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. Drone Analysis Results
+    const droneCtx = document.getElementById('drone-analysis-chart');
+    new Chart(droneCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Mandalina', 'Elma', 'Armut', 'Şeftali', 'Nar', 'Hurma'],
+            datasets: [{
+                label: 'AI Tahmini',
+                data: [5680, 4250, 3120, 2890, 1950, 1450],
+                backgroundColor: farmColors.info + '80',
+                borderColor: farmColors.info,
+                borderWidth: 2
+            }, {
+                label: 'Manuel Sayım',
+                data: [5420, 4180, 3050, 2750, 1880, 1380],
+                backgroundColor: farmColors.warning + '80',
+                borderColor: farmColors.warning,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'AI Tahmini vs Manuel Sayım Karşılaştırması'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' adet';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 4. Farm Health Index (Doughnut)
+    const healthCtx = document.getElementById('health-index-chart');
+    new Chart(healthCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Sağlıklı', 'Orta Risk', 'Yüksek Risk'],
+            datasets: [{
+                data: [84, 12, 4],
+                backgroundColor: [
+                    farmColors.success,
+                    farmColors.warning,
+                    farmColors.danger
+                ],
+                borderWidth: 3,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                title: {
+                    display: true,
+                    text: 'Genel Sağlık Durumu'
+                }
+            },
+            cutout: '60%'
+        }
+    });
+
+    // 5. Growth Trend Analysis
+    const growthCtx = document.getElementById('growth-trend-chart');
+    const growthChart = new Chart(growthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+            datasets: [{
+                label: 'Meyve Sayısı Artışı (%)',
+                data: [5, 8, 12, 18, 15, 22, 28, 25, 35, 42, 38, 45],
+                borderColor: farmColors.success,
+                backgroundColor: farmColors.success + '20',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }, {
+                label: 'Ağırlık Artışı (%)',
+                data: [3, 6, 9, 15, 12, 18, 24, 21, 30, 36, 33, 39],
+                borderColor: farmColors.info,
+                backgroundColor: farmColors.info + '20',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Yıllık Büyüme Performansı'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+
+    // Chart Controls Event Listeners
+    document.querySelectorAll('[data-period]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('[data-period]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Here you would typically update the chart data based on the selected period
+            console.log('Period changed to:', this.dataset.period);
+        });
+    });
+
+    // Growth filter
+    document.getElementById('growth-filter').addEventListener('change', function() {
+        const selectedFruit = this.value;
+        // Here you would filter the growth chart data
+        console.log('Filter changed to:', selectedFruit);
+    });
+
+    // Auto-refresh data every 30 seconds (for demo)
+    setInterval(function() {
+        // Update chart data here
+        console.log('Auto-refreshing chart data...');
+    }, 30000);
+
+    // Add smooth animations
+    Chart.defaults.animation.duration = 1000;
+    Chart.defaults.animation.easing = 'easeInOutQuart';
+});
 </script>

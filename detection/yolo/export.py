@@ -2,6 +2,8 @@ import argparse
 import sys
 import time
 import warnings
+import logging
+from pathlib import Path
 
 sys.path.append('./')  # to run '$ python *.py' files in subdirectories
 
@@ -16,10 +18,184 @@ from utils.general import set_logging, check_img_size
 from utils.torch_utils import select_device
 from utils.add_nms import RegisterNMS
 
-if __name__ == '__main__':
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def export_torchscript(model, img, weights_path):
+    """Export model to TorchScript format."""
+    try:
+        logger.info(f'Starting TorchScript export with torch {torch.__version__}...')
+        f = weights_path.replace('.pt', '.torchscript.pt')
+        ts = torch.jit.trace(model, img, strict=False)
+        ts.save(f)
+        logger.info(f'TorchScript export success, saved as {f}')
+        return f
+    except Exception as e:
+        logger.error(f'TorchScript export failure: {str(e)}')
+        return None
+
+
+def export_coreml(ts, img, weights_path, opt):
+    """Export model to CoreML format."""
+    try:
+        import coremltools as ct
+        
+        logger.info(f'Starting CoreML export with coremltools {ct.__version__}...')
+        
+        # Convert model from torchscript
+        ct_model = ct.convert(ts, inputs=[ct.ImageType('image', shape=img.shape, scale=1/255.0, bias=[0, 0, 0])])
+        
+        # Apply quantization if requested
+        bits, mode = (8, 'kmeans_lut') if opt.int8 else (16, 'linear') if opt.fp16 else (32, None)
+        if bits < 32:
+            if sys.platform.lower() == 'darwin':  # quantization only supported on macOS
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    ct_model = ct.models.neural_network.quantization_utils.quantize_weights(ct_model, bits, mode)
+                logger.info(f'Applied {bits}-bit quantization')
+            else:
+                logger.warning('Quantization only supported on macOS, skipping...')
+
+        f = weights_path.replace('.pt', '.mlmodel')
+        ct_model.save(f)
+        logger.info(f'CoreML export success, saved as {f}')
+        return f
+    except ImportError:
+        logger.warning('CoreML export requires: pip install coremltools')
+        return None
+    except Exception as e:
+        logger.error(f'CoreML export failure: {str(e)}')
+        return None
+
+
+def export_torchscript_lite(model, img, weights_path):
+    """Export model to TorchScript-Lite format."""
+    try:
+        logger.info(f'Starting TorchScript-Lite export with torch {torch.__version__}...')
+        f = weights_path.replace('.pt', '.torchscript.ptl')
+        tsl = torch.jit.trace(model, img, strict=False)
+        tsl = optimize_for_mobile(tsl)
+        tsl._save_for_lite_interpreter(f)
+        logger.info(f'TorchScript-Lite export success, saved as {f}')
+        return f
+    except Exception as e:
+        logger.error(f'TorchScript-Lite export failure: {str(e)}')
+        return None
+
+
+def export_onnx(model, img, weights_path, opt, labels):
+    """Export model to ONNX format."""
+    try:
+        import onnx
+        
+        logger.info(f'Starting ONNX export with onnx {onnx.__version__}...')
+        f = weights_path.replace('.pt', '.onnx')
+        model.eval()
+        
+        # Configure output names
+        output_names = ['classes', 'boxes'] if opt.include_nms else ['output']
+        
+        # Configure dynamic axes
+        dynamic_axes = None
+        if opt.dynamic:
+            dynamic_axes = {
+                'images': {0: 'batch', 2: 'height', 3: 'width'},
+                'output': {0: 'batch', 2: 'y', 3: 'x'}
+            }
+        
+        if opt.dynamic_batch:
+            opt.batch_size = 'batch'
+            dynamic_axes = {'images': {0: 'batch'}}
+            
+            if opt.end2end and opt.max_wh is None:
+                output_axes = {
+                    'num_dets': {0: 'batch'},
+                    'det_boxes': {0: 'batch'},
+                    'det_scores': {0: 'batch'},
+                    'det_classes': {0: 'batch'},
+                }
+            else:
+                output_axes = {'output': {0: 'batch'}}
+            dynamic_axes.update(output_axes)
+
+        # Configure end-to-end export
+        if opt.grid:
+            if opt.end2end:
+                backend = 'TensorRT' if opt.max_wh is None else 'onnxruntime'
+                logger.info(f'Configuring end2end onnx model for {backend}...')
+                model = End2End(model, opt.topk_all, opt.iou_thres, opt.conf_thres, opt.max_wh, model.device, len(labels))
+                
+                if opt.end2end and opt.max_wh is None:
+                    output_names = ['num_dets', 'det_boxes', 'det_scores', 'det_classes']
+                    shapes = [opt.batch_size, 1, opt.batch_size, opt.topk_all, 4,
+                             opt.batch_size, opt.topk_all, opt.batch_size, opt.topk_all]
+                else:
+                    output_names = ['output']
+            else:
+                model.model[-1].concat = True
+
+        # Export to ONNX
+        torch.onnx.export(
+            model, img, f, verbose=False, opset_version=12,
+            input_names=['images'], output_names=output_names,
+            dynamic_axes=dynamic_axes
+        )
+
+        # Validate ONNX model
+        onnx_model = onnx.load(f)
+        onnx.checker.check_model(onnx_model)
+        logger.info('ONNX model validation passed')
+
+        # Configure output shapes for end2end
+        if opt.end2end and opt.max_wh is None:
+            for i in onnx_model.graph.output:
+                for j in i.type.tensor_type.shape.dim:
+                    j.dim_param = str(shapes.pop(0))
+
+        # Simplify ONNX model if requested
+        if opt.simplify:
+            try:
+                import onnxsim
+                logger.info('Starting ONNX simplification...')
+                onnx_model, check = onnxsim.simplify(onnx_model)
+                assert check, 'ONNX simplification check failed'
+                logger.info('ONNX simplification completed')
+            except ImportError:
+                logger.warning('ONNX simplification requires: pip install onnx-simplifier')
+            except Exception as e:
+                logger.error(f'ONNX simplification failure: {str(e)}')
+
+        # Save final ONNX model
+        onnx.save(onnx_model, f)
+        logger.info(f'ONNX export success, saved as {f}')
+
+        # Register NMS plugin if requested
+        if opt.include_nms:
+            try:
+                logger.info('Registering NMS plugin for ONNX...')
+                mo = RegisterNMS(f)
+                mo.register_nms()
+                mo.save(f)
+                logger.info('NMS plugin registration completed')
+            except Exception as e:
+                logger.error(f'NMS plugin registration failed: {str(e)}')
+
+        return f
+    except ImportError:
+        logger.warning('ONNX export requires: pip install onnx')
+        return None
+    except Exception as e:
+        logger.error(f'ONNX export failure: {str(e)}')
+        return None
+
+
+def main():
+    """Main export function."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default='./yolor-csp-c.pt', help='weights path')
-    parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='image size')  # height, width
+    parser.add_argument('--weights', type=str, default='./yolov7.pt', help='weights path')
+    parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='image size')
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
     parser.add_argument('--dynamic', action='store_true', help='dynamic ONNX axes')
     parser.add_argument('--dynamic-batch', action='store_true', help='dynamic batch onnx for tensorrt and onnx-runtime')
@@ -34,172 +210,95 @@ if __name__ == '__main__':
     parser.add_argument('--include-nms', action='store_true', help='export end2end onnx')
     parser.add_argument('--fp16', action='store_true', help='CoreML FP16 half-precision export')
     parser.add_argument('--int8', action='store_true', help='CoreML INT8 quantization')
+    
+    # Format selection
+    parser.add_argument('--formats', nargs='+', default=['torchscript', 'onnx'], 
+                       choices=['torchscript', 'coreml', 'torchscript-lite', 'onnx'],
+                       help='export formats')
+    
     opt = parser.parse_args()
     opt.img_size *= 2 if len(opt.img_size) == 1 else 1  # expand
     opt.dynamic = opt.dynamic and not opt.end2end
     opt.dynamic = False if opt.dynamic_batch else opt.dynamic
-    print(opt)
+    
+    logger.info(f"Export configuration: {opt}")
+    
+    # Check if weights file exists
+    if not Path(opt.weights).exists():
+        logger.error(f"Weights file not found: {opt.weights}")
+        return
+    
     set_logging()
     t = time.time()
+    exported_files = []
 
-    # Load PyTorch model
-    device = select_device(opt.device)
-    model = attempt_load(opt.weights, map_location=device)  # load FP32 model
-    labels = model.names
-
-    # Checks
-    gs = int(max(model.stride))  # grid size (max stride)
-    opt.img_size = [check_img_size(x, gs) for x in opt.img_size]  # verify img_size are gs-multiples
-
-    # Input
-    img = torch.zeros(opt.batch_size, 3, *opt.img_size).to(device)  # image size(1,3,320,192) iDetection
-
-    # Update model
-    for k, m in model.named_modules():
-        m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatibility
-        if isinstance(m, models.common.Conv):  # assign export-friendly activations
-            if isinstance(m.act, nn.Hardswish):
-                m.act = Hardswish()
-            elif isinstance(m.act, nn.SiLU):
-                m.act = SiLU()
-        # elif isinstance(m, models.yolo.Detect):
-        #     m.forward = m.forward_export  # assign forward (optional)
-    model.model[-1].export = not opt.grid  # set Detect() layer grid export
-    y = model(img)  # dry run
-    if opt.include_nms:
-        model.model[-1].include_nms = True
-        y = None
-
-    # TorchScript export
     try:
-        print('\nStarting TorchScript export with torch %s...' % torch.__version__)
-        f = opt.weights.replace('.pt', '.torchscript.pt')  # filename
-        ts = torch.jit.trace(model, img, strict=False)
-        ts.save(f)
-        print('TorchScript export success, saved as %s' % f)
-    except Exception as e:
-        print('TorchScript export failure: %s' % e)
+        # Load PyTorch model
+        device = select_device(opt.device)
+        logger.info(f"Loading model: {opt.weights}")
+        model = attempt_load(opt.weights, map_location=device)
+        labels = model.names
+        logger.info(f"Model loaded successfully. Classes: {labels}")
 
-    # CoreML export
-    try:
-        import coremltools as ct
+        # Verify image size
+        gs = int(max(model.stride))
+        opt.img_size = [check_img_size(x, gs) for x in opt.img_size]
+        logger.info(f"Image size: {opt.img_size}, Grid size: {gs}")
 
-        print('\nStarting CoreML export with coremltools %s...' % ct.__version__)
-        # convert model from torchscript and apply pixel scaling as per detect.py
-        ct_model = ct.convert(ts, inputs=[ct.ImageType('image', shape=img.shape, scale=1 / 255.0, bias=[0, 0, 0])])
-        bits, mode = (8, 'kmeans_lut') if opt.int8 else (16, 'linear') if opt.fp16 else (32, None)
-        if bits < 32:
-            if sys.platform.lower() == 'darwin':  # quantization only supported on macOS
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=DeprecationWarning)  # suppress numpy==1.20 float warning
-                    ct_model = ct.models.neural_network.quantization_utils.quantize_weights(ct_model, bits, mode)
-            else:
-                print('quantization only supported on macOS, skipping...')
+        # Create dummy input
+        img = torch.zeros(opt.batch_size, 3, *opt.img_size).to(device)
 
-        f = opt.weights.replace('.pt', '.mlmodel')  # filename
-        ct_model.save(f)
-        print('CoreML export success, saved as %s' % f)
-    except Exception as e:
-        print('CoreML export failure: %s' % e)
-                     
-    # TorchScript-Lite export
-    try:
-        print('\nStarting TorchScript-Lite export with torch %s...' % torch.__version__)
-        f = opt.weights.replace('.pt', '.torchscript.ptl')  # filename
-        tsl = torch.jit.trace(model, img, strict=False)
-        tsl = optimize_for_mobile(tsl)
-        tsl._save_for_lite_interpreter(f)
-        print('TorchScript-Lite export success, saved as %s' % f)
-    except Exception as e:
-        print('TorchScript-Lite export failure: %s' % e)
+        # Update model for export compatibility
+        for k, m in model.named_modules():
+            m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatibility
+            if isinstance(m, models.common.Conv):
+                if isinstance(m.act, nn.Hardswish):
+                    m.act = Hardswish()
+                elif isinstance(m.act, nn.SiLU):
+                    m.act = SiLU()
 
-    # ONNX export
-    try:
-        import onnx
-
-        print('\nStarting ONNX export with onnx %s...' % onnx.__version__)
-        f = opt.weights.replace('.pt', '.onnx')  # filename
-        model.eval()
-        output_names = ['classes', 'boxes'] if y is None else ['output']
-        dynamic_axes = None
-        if opt.dynamic:
-            dynamic_axes = {'images': {0: 'batch', 2: 'height', 3: 'width'},  # size(1,3,640,640)
-             'output': {0: 'batch', 2: 'y', 3: 'x'}}
-        if opt.dynamic_batch:
-            opt.batch_size = 'batch'
-            dynamic_axes = {
-                'images': {
-                    0: 'batch',
-                }, }
-            if opt.end2end and opt.max_wh is None:
-                output_axes = {
-                    'num_dets': {0: 'batch'},
-                    'det_boxes': {0: 'batch'},
-                    'det_scores': {0: 'batch'},
-                    'det_classes': {0: 'batch'},
-                }
-            else:
-                output_axes = {
-                    'output': {0: 'batch'},
-                }
-            dynamic_axes.update(output_axes)
-        if opt.grid:
-            if opt.end2end:
-                print('\nStarting export end2end onnx model for %s...' % 'TensorRT' if opt.max_wh is None else 'onnxruntime')
-                model = End2End(model,opt.topk_all,opt.iou_thres,opt.conf_thres,opt.max_wh,device,len(labels))
-                if opt.end2end and opt.max_wh is None:
-                    output_names = ['num_dets', 'det_boxes', 'det_scores', 'det_classes']
-                    shapes = [opt.batch_size, 1, opt.batch_size, opt.topk_all, 4,
-                              opt.batch_size, opt.topk_all, opt.batch_size, opt.topk_all]
-                else:
-                    output_names = ['output']
-            else:
-                model.model[-1].concat = True
-
-        torch.onnx.export(model, img, f, verbose=False, opset_version=12, input_names=['images'],
-                          output_names=output_names,
-                          dynamic_axes=dynamic_axes)
-
-        # Checks
-        onnx_model = onnx.load(f)  # load onnx model
-        onnx.checker.check_model(onnx_model)  # check onnx model
-
-        if opt.end2end and opt.max_wh is None:
-            for i in onnx_model.graph.output:
-                for j in i.type.tensor_type.shape.dim:
-                    j.dim_param = str(shapes.pop(0))
-
-        # print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
-
-        # # Metadata
-        # d = {'stride': int(max(model.stride))}
-        # for k, v in d.items():
-        #     meta = onnx_model.metadata_props.add()
-        #     meta.key, meta.value = k, str(v)
-        # onnx.save(onnx_model, f)
-
-        if opt.simplify:
-            try:
-                import onnxsim
-
-                print('\nStarting to simplify ONNX...')
-                onnx_model, check = onnxsim.simplify(onnx_model)
-                assert check, 'assert check failed'
-            except Exception as e:
-                print(f'Simplifier failure: {e}')
-
-        # print(onnx.helper.printable_graph(onnx_model.graph))  # print a human readable model
-        onnx.save(onnx_model,f)
-        print('ONNX export success, saved as %s' % f)
-
+        model.model[-1].export = not opt.grid
+        y = model(img)  # dry run
+        
         if opt.include_nms:
-            print('Registering NMS plugin for ONNX...')
-            mo = RegisterNMS(f)
-            mo.register_nms()
-            mo.save(f)
+            model.model[-1].include_nms = True
+            y = None
+
+        logger.info("Model preparation completed")
+
+        # Export to selected formats
+        if 'torchscript' in opt.formats:
+            ts_file = export_torchscript(model, img, opt.weights)
+            if ts_file:
+                exported_files.append(ts_file)
+                
+                # CoreML requires TorchScript
+                if 'coreml' in opt.formats:
+                    ts = torch.jit.load(ts_file)
+                    coreml_file = export_coreml(ts, img, opt.weights, opt)
+                    if coreml_file:
+                        exported_files.append(coreml_file)
+
+        if 'torchscript-lite' in opt.formats:
+            tsl_file = export_torchscript_lite(model, img, opt.weights)
+            if tsl_file:
+                exported_files.append(tsl_file)
+
+        if 'onnx' in opt.formats:
+            onnx_file = export_onnx(model, img, opt.weights, opt, labels)
+            if onnx_file:
+                exported_files.append(onnx_file)
 
     except Exception as e:
-        print('ONNX export failure: %s' % e)
+        logger.error(f"Export failed: {str(e)}")
+        return
 
-    # Finish
-    print('\nExport complete (%.2fs). Visualize with https://github.com/lutzroeder/netron.' % (time.time() - t))
+    # Summary
+    export_time = time.time() - t
+    logger.info(f"\nExport complete ({export_time:.2f}s)")
+    logger.info(f"Exported files: {exported_files}")
+    logger.info("Visualize with https://github.com/lutzroeder/netron")
+
+
+if __name__ == '__main__':
+    main()

@@ -1,96 +1,431 @@
 {% extends 'header.html' %}
 {% block body %}
-      {% load static %}
-      {% include 'menu.html' %}
-      {% include 'navbar.html' with picture=userss.picture %}
+{% load static %}
+{% include 'menu.html' %}
+{% include 'navbar.html' with picture=userss.picture %}
 
-      <div id="wrapper">
-        <div class="main-content">
-              <div class="row small-spacing">
-
-                <div class="col-xl-12 col-12">
-                    <div class="box-content card white">
-                        <h4 class="box-title">Basic example </h4>
-                        <!-- /.box-title -->
-                        <div class="card-content">
-                            {% if userss != None %}
+<div id="wrapper">
+    <div class="main-content">
+        <div class="row small-spacing">
+            <div class="col-xl-8 offset-xl-2 col-12">
+                <div class="box-content card white">
+                    <div class="card-header">
+                        <h4 class="box-title">
+                            <i class="ico fa fa-plus-circle text-success mr-2"></i>
+                            {% if projes %}Projeyi Düzenle{% else %}Yeni Proje Ekle{% endif %}
+                        </h4>
+                        <p class="text-muted">Tarım alanınız için yeni bir proje oluşturun</p>
+                    </div>
+                    
+                    <div class="card-content">
+                        {% if userss != None %}
+                        <form action="{{ request.path|urlencode }}" method="post" enctype="multipart/form-data" class="project-form">
+                            {% csrf_token %}
                             
-                            <form action="{{ request.path|urlencode }}" method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="form-group">
-                                    <label for="exampleInputEmail1">Farm</label>
-                                    <input type="text" placeholder="Farm" name="Farm" class="form-control" value="{% if projes != None %}{{projes.Farm}} {% endif %}">
+                            <!-- Farm Information Section -->
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="fa fa-farm text-success"></i>
+                                    Çiftlik Bilgileri
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="farm-name" class="form-label">
+                                                <i class="fa fa-home text-muted mr-1"></i>
+                                                Çiftlik Adı
+                                            </label>
+                                            <input type="text" 
+                                                   id="farm-name"
+                                                   name="Farm" 
+                                                   class="form-control form-control-lg" 
+                                                   placeholder="Örn: Yeşil Vadi Çiftliği"
+                                                   value="{% if projes != None %}{{projes.Farm}}{% endif %}"
+                                                   required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="field-name" class="form-label">
+                                                <i class="fa fa-leaf text-muted mr-1"></i>
+                                                Tarla/Alan Adı
+                                            </label>
+                                            <input type="text" 
+                                                   id="field-name"
+                                                   name="Field" 
+                                                   class="form-control form-control-lg" 
+                                                   placeholder="Örn: Kuzey Bahçesi"
+                                                   value="{% if projes != None %}{{projes.Field}}{% endif %}"
+                                                   required>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="exampleInputEmail1">Field</label>
-                                    <input type="text" placeholder="Field" name="Field" class="form-control" value="{% if projes != None %}{{projes.Field}} {% endif %}">
-                                    <input type="hidden" name="kat_user" class="form-control" value="{{userss.id}}">
+                            </div>
+
+                            <!-- Project Details Section -->
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="fa fa-clipboard-list text-primary"></i>
+                                    Proje Detayları
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="project-title" class="form-label">
+                                                <i class="fa fa-tag text-muted mr-1"></i>
+                                                Proje Başlığı
+                                            </label>
+                                            <input type="text" 
+                                                   id="project-title"
+                                                   name="Title" 
+                                                   class="form-control form-control-lg" 
+                                                   placeholder="Örn: 2024 Elma Hasatı Analizi"
+                                                   value="{% if projes != None %}{{projes.Title}}{% endif %}"
+                                                   required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="project-state" class="form-label">
+                                                <i class="fa fa-flag text-muted mr-1"></i>
+                                                Durum
+                                            </label>
+                                            <select name="State" 
+                                                    id="project-state" 
+                                                    class="form-control form-control-lg">
+                                                <option value="Planlama" {% if projes.State == "Planlama" %}selected{% endif %}>
+                                                    📋 Planlama
+                                                </option>
+                                                <option value="Aktif" {% if projes.State == "Aktif" %}selected{% endif %}>
+                                                    🟢 Aktif
+                                                </option>
+                                                <option value="Tamamlandı" {% if projes.State == "Tamamlandı" %}selected{% endif %}>
+                                                    ✅ Tamamlandı
+                                                </option>
+                                                <option value="Beklemede" {% if projes.State == "Beklemede" %}selected{% endif %}>
+                                                    ⏸️ Beklemede
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="exampleInputEmail1">Title</label>
-                                    <input type="text" placeholder="Title" name="Title" class="form-control" value="{% if projes != None %}{{projes.Title}} {% endif %}">
+                            </div>
+
+                            <!-- Image Upload Section -->
+                            <div class="form-section">
+                                <h5 class="section-title">
+                                    <i class="fa fa-camera text-info"></i>
+                                    Proje Görseli
+                                </h5>
+                                
+                                <div class="image-upload-container">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="upload-area" onclick="document.getElementById('exampleInputFile').click()">
+                                                <div class="upload-content">
+                                                    <i class="fa fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                                    <h6 class="text-muted">Görsel Yüklemek İçin Tıklayın</h6>
+                                                    <p class="text-muted small">PNG, JPG, GIF formatları desteklenmektedir</p>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fa fa-plus mr-1"></i>
+                                                        Dosya Seç
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <input id="exampleInputFile" 
+                                                   style="display: none" 
+                                                   type="file" 
+                                                   name="picture" 
+                                                   accept="image/*" 
+                                                   onchange="loadFile(event)">
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <div class="image-preview">
+                                                <div class="preview-container">
+                                                    <img id="output" 
+                                                         src="{% if projes != None %}{% static projes.picture %}{% else %}{% static 'images/default-project.png' %}{% endif %}"
+                                                         alt="Proje Görseli"
+                                                         class="preview-image">
+                                                    <div class="preview-overlay">
+                                                        <i class="fa fa-eye"></i>
+                                                    </div>
+                                                </div>
+                                                <p class="text-center text-muted small mt-2">Proje Önizleme</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                               
-                                <div class="form-group">
-                                    <label for="exampleInputEmail1">State</label>
-                                    <input type="text" placeholder="State" name="State" class="form-control" value="{% if projes != None %}{{projes.State}} {% endif %}">
+                            </div>
+
+                            <!-- Hidden Fields -->
+                            <input type="hidden" name="kat_user" value="{{userss.id}}">
+                            <input type="hidden" id="hashing_path" name="hashing_path" value="0">
+
+                            <!-- Action Buttons -->
+                            <div class="form-actions">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <a href="{% url 'projects_list' %}" class="btn btn-light btn-lg btn-block">
+                                            <i class="fa fa-arrow-left mr-2"></i>
+                                            Geri Dön
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button type="submit" class="btn btn-success btn-lg btn-block">
+                                            <i class="fa fa-save mr-2"></i>
+                                            {% if projes %}Güncelle{% else %}Proje Oluştur{% endif %}
+                                        </button>
+                                    </div>
                                 </div>
-                               
-                                 <input type="hidden" id="hashing_path" name="hashing_path" value="0">
-                                <div class="form-group">
-                                    <label for="exampleInputFile" class="btn btn-default"> Resmini seç <i class="ico fa-solid fa-image"></i></label>
-								<input id="exampleInputFile"style="display: none" type="file" name="picture" accept="image/*" onchange="loadFile(event)" multiple>
-                                    {% load static %}
-								
-								<div class="col-lg-3 col-6"> 
-								
-									<img id="output" src="{% if projes != None %}{% static projes.picture %} {% endif %}">
-								
-							</div>
-                                </div>
-                             
-                                <button type="submit" class="btn btn-primary btn-sm waves-effect waves-light">Submit</button>
-                            </form>
+                            </div>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle mr-2"></i>
+                            Bu sayfaya erişim için giriş yapmanız gerekmektedir.
                         </div>
                         {% endif %}
-                        <!-- /.card-content -->
                     </div>
-                    <!-- /.box-content -->
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<style>
+.project-form {
+    padding: 20px;
+}
 
+.form-section {
+    margin-bottom: 35px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
 
+.form-section:last-child {
+    border-bottom: none;
+}
 
+.section-title {
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 600;
+    padding-bottom: 10px;
+}
 
+.form-label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 8px;
+    display: block;
+}
 
+.form-control-lg {
+    padding: 12px 16px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
 
+.form-control-lg:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.1);
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.upload-area:hover {
+    border-color: #28a745;
+    background: #f8fff9;
+}
+
+.upload-content i {
+    color: #28a745;
+}
+
+.image-preview {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.preview-container {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.preview-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.preview-container:hover .preview-overlay {
+    opacity: 1;
+}
+
+.preview-overlay i {
+    color: white;
+    font-size: 24px;
+}
+
+.form-actions {
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 25px;
+}
+
+.card-header h4 {
+    margin-bottom: 5px;
+}
+
+.alert {
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .col-xl-8.offset-xl-2 {
+        margin: 0;
+        padding: 0 15px;
+    }
+    
+    .project-form {
+        padding: 15px;
+    }
+    
+    .form-actions .row .col-md-6 {
+        margin-bottom: 10px;
+    }
+    
+    .upload-area {
+        padding: 30px 15px;
+    }
+    
+    .preview-image {
+        height: 150px;
+    }
+}
+
+/* Success Animation */
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Focus States */
+.form-control:focus,
+.form-control-lg:focus {
+    outline: none;
+}
+
+/* Icon Colors */
+.text-success { color: #28a745 !important; }
+.text-primary { color: #007bff !important; }
+.text-info { color: #17a2b8 !important; }
+.text-muted { color: #6c757d !important; }
+</style>
 
 <script>
-    var loadFile = function(event) {
-        var reader = new FileReader();
-        reader.onload = function(){
+var loadFile = function(event) {
+    var reader = new FileReader();
+    reader.onload = function(){
         var output = document.getElementById('output');
         output.src = reader.result;
-        };
-        reader.readAsDataURL(event.target.files[0]);
+        
+        // Add a nice fade effect
+        output.style.opacity = '0';
+        setTimeout(function() {
+            output.style.transition = 'opacity 0.3s ease';
+            output.style.opacity = '1';
+        }, 100);
     };
+    reader.readAsDataURL(event.target.files[0]);
+};
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.project-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(function(field) {
+                if (!field.value.trim()) {
+                    field.style.borderColor = '#dc3545';
+                    isValid = false;
+                } else {
+                    field.style.borderColor = '#28a745';
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Lütfen tüm zorunlu alanları doldurun.');
+            }
+        });
+    }
+});
+
+// Auto-hide success messages
+setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert-success');
+    alerts.forEach(function(alert) {
+        alert.style.transition = 'opacity 0.5s ease';
+        alert.style.opacity = '0';
+        setTimeout(function() {
+            alert.remove();
+        }, 500);
+    });
+}, 3000);
 </script>
 
-
-
-
-
-
-              </div>
-              <!-- /.box-content card -->
-          </div>
-
-
-
-
-</div>
-
-</div>
-<!-- /.main-content -->
-</div><!--/#wrapper -->
 {% endblock %}

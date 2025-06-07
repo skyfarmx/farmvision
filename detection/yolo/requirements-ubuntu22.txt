@@ -1,0 +1,33 @@
+# Sistem paketlerini yükle
+sudo apt update && sudo apt upgrade -y
+
+# Python ve geliştirme araçları
+sudo apt install -y python3.10 python3.10-dev python3.10-venv python3-pip
+sudo apt install -y python3-setuptools python3-wheel
+
+# OpenCV için gerekli kütüphaneler
+sudo apt install -y libopencv-dev python3-opencv
+sudo apt install -y libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1
+
+# Bilimsel hesaplama kütüphaneleri
+sudo apt install -y libblas-dev liblapack-dev libatlas-base-dev gfortran
+
+# Görüntü işleme kütüphaneleri
+sudo apt install -y libjpeg-dev libpng-dev libtiff-dev libwebp-dev
+sudo apt install -y libavcodec-dev libavformat-dev libswscale-dev
+
+# Sistem araçları
+sudo apt install -y build-essential cmake pkg-config
+sudo apt install -y curl wget git vim
+
+# Redis ve veritabanı
+sudo apt install -y redis-server postgresql postgresql-contrib
+
+# Geospatial (opsiyonel)
+# sudo apt install -y gdal-bin libgdal-dev
+
+# Virtual environment oluştur ve requirements yükle
+python3.10 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt

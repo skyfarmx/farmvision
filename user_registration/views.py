@@ -3,7 +3,7 @@ from django.shortcuts import render
 from pathlib import Path
 from django.contrib.auth import authenticate, login as auth_login, logout as log_out
 from django.shortcuts import redirect
-from yolowebapp2 import settings
+from farmvision import settings
 from django.contrib.auth.forms import UserCreationForm #, AuthenticationForm, UsernameField
 from .forms import UserForm, UsersForm
 from dron_map.forms import Projects_Form
